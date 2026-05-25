@@ -1,0 +1,11 @@
+# Godot 4.1+ generated data
+.godot/
+*.translation
+
+# Local OS/editor files
+.DS_Store
+
+# Local export/build output
+/android/
+/exports/
+*.tmp
