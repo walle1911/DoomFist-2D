@@ -1,3 +1,15 @@
 [gd_scene format=3 uid="uid://sb870pah3x7m"]
 
-[node name="Layer" type="Node2D" unique_id=881371657]
+[node name="Player" type="Node2D" unique_id=881371657]
+
+[node name="Player" type="CharacterBody2D" parent="." unique_id=14284688]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=1634614184]
+
+[node name="Sprite2D" type="Sprite2D" parent="Player" unique_id=1641191794]
+
+[node name="Camera2D" type="Camera2D" parent="Player" unique_id=707871304]
+
+[node name="BlockArea" type="Area2D" parent="Player" unique_id=868752443]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player/BlockArea" unique_id=631861958]
