@@ -1,5 +1,6 @@
 # Godot 4.1+ generated data
 .godot/
+.import/
 *.translation
 
 # Local OS/editor files
@@ -8,4 +9,5 @@
 # Local export/build output
 /android/
 /exports/
+export_credentials.cfg
 *.tmp
