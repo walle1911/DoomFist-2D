@@ -86,6 +86,11 @@ func get_horizontal_direction() -> float:
 		keyboard_direction += 1.0
 	return keyboard_direction
 
+#回到复活点
 func respawn() -> void:
 	global_position = spawn_position
 	velocity = Vector2.ZERO
+	
+#更新复活点
+func set_checkpoint(pos: Vector2) -> void:
+	spawn_position = pos

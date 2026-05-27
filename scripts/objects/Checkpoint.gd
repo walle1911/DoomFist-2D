@@ -1,11 +1,10 @@
-extends Node
+extends Area2D
 
+@onready var spawn_point: Marker2D = $SpawnPoint
 
-# Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	pass # Replace with function body.
+	body_entered.connect(_on_body_entered)
 
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
+func _on_body_entered(body: Node) -> void:
+	if body.has_method("set_checkpoint"):
+		body.set_checkpoint(spawn_point.global_position)
