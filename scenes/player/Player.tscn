@@ -1,15 +1,25 @@
 [gd_scene format=3 uid="uid://sb870pah3x7m"]
 
-[node name="Player" type="Node2D" unique_id=881371657]
+[ext_resource type="Script" uid="uid://h3uqre6i5ueq" path="res://scripts/player/PlayerController.gd" id="1_wr5hl"]
 
-[node name="Player" type="CharacterBody2D" parent="." unique_id=14284688]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_o8nba"]
+size = Vector2(20, 40)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=1634614184]
+[node name="Player" type="CharacterBody2D" unique_id=14284688]
+script = ExtResource("1_wr5hl")
 
-[node name="Sprite2D" type="Sprite2D" parent="Player" unique_id=1641191794]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1634614184]
+shape = SubResource("RectangleShape2D_o8nba")
 
-[node name="Camera2D" type="Camera2D" parent="Player" unique_id=707871304]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1641191794]
 
-[node name="BlockArea" type="Area2D" parent="Player" unique_id=868752443]
+[node name="Camera2D" type="Camera2D" parent="." unique_id=707871304]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Player/BlockArea" unique_id=631861958]
+[node name="BlockArea" type="Area2D" parent="." unique_id=868752443]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BlockArea" unique_id=631861958]
+
+[node name="Polygon2D" type="Polygon2D" parent="." unique_id=1785172194]
+color = Color(0.8332228, 0.724551, 0.39851984, 1)
+polygon = PackedVector2Array(-16, -28, 16, -28, 16, 20, -16, 20)
+uv = PackedVector2Array(130, -35.5, 296.5, 47.5, 329, -58.5)
