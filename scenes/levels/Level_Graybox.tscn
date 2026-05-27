@@ -35,7 +35,7 @@ position = Vector2(0, -20)
 move_speed = 300.0
 
 [node name="KillZone" parent="." unique_id=388575701 instance=ExtResource("2_2jchf")]
-position = Vector2(-20, 63)
+position = Vector2(599, 89)
 script = ExtResource("3_ak5w2")
 
 [node name="Checkpoint" parent="." unique_id=167871073 instance=ExtResource("4_fv3v4")]

@@ -1,3 +1,56 @@
 [gd_scene format=3 uid="uid://ges0hfkv1f44"]
 
+[ext_resource type="PackedScene" uid="uid://dfprpwoxlt6hb" path="res://scenes/objects/Checkpoint.tscn" id="1_giu1a"]
+[ext_resource type="PackedScene" uid="uid://bkbwwqtml01f2" path="res://scenes/objects/KillZone.tscn" id="2_kkfnt"]
+[ext_resource type="PackedScene" uid="uid://sb870pah3x7m" path="res://scenes/player/Player.tscn" id="3_2esi6"]
+[ext_resource type="Script" uid="uid://c3v8o31lkynad" path="res://scripts/objects/KillZone.gd" id="4_kkfnt"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mwytc"]
+size = Vector2(200, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_g74q7"]
+size = Vector2(96, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4mw4c"]
+size = Vector2(120, 32)
+
 [node name="Room01MoveJump" type="Node2D" unique_id=1487911940]
+
+[node name="Platforms" type="Node2D" parent="." unique_id=520028261]
+
+[node name="Floor_A" type="StaticBody2D" parent="Platforms" unique_id=1773282287]
+position = Vector2(100, 230)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/Floor_A" unique_id=146633483]
+shape = SubResource("RectangleShape2D_mwytc")
+
+[node name="Polygon2D" type="Polygon2D" parent="Platforms/Floor_A" unique_id=1779929779]
+polygon = PackedVector2Array(-100, -16, 100, -16, 100, 16, -100, 16)
+
+[node name="Floor_B" type="StaticBody2D" parent="Platforms" unique_id=2011689315]
+position = Vector2(290, 210)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/Floor_B" unique_id=1957467575]
+shape = SubResource("RectangleShape2D_g74q7")
+
+[node name="Polygon2D" type="Polygon2D" parent="Platforms/Floor_B" unique_id=1736576546]
+polygon = PackedVector2Array(-48, -16, 48, -16, 48, 16, -48, 16)
+
+[node name="Floor_C" type="StaticBody2D" parent="Platforms" unique_id=433689987]
+position = Vector2(430, 239)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/Floor_C" unique_id=743482942]
+shape = SubResource("RectangleShape2D_4mw4c")
+
+[node name="Polygon2D" type="Polygon2D" parent="Platforms/Floor_C" unique_id=401783686]
+polygon = PackedVector2Array(-60, -16, 60, -16, 60, 16, -60, 16)
+
+[node name="Checkpoint" parent="." unique_id=167871073 instance=ExtResource("1_giu1a")]
+position = Vector2(290, 170)
+
+[node name="Player" parent="." unique_id=14284688 instance=ExtResource("3_2esi6")]
+position = Vector2(40, 180)
+
+[node name="KillZone" parent="." unique_id=575578226 instance=ExtResource("2_kkfnt")]
+position = Vector2(240, 330)
+script = ExtResource("4_kkfnt")

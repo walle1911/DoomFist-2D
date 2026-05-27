@@ -16,10 +16,15 @@ const ACTION_RESTART := "restart"
 @export var coyote_time: float = 0.08
 @export var jump_buffer_time: float = 0.10
 
+#上勾拳的垂直速度和水平位移速度的百分比
+@export var uppercut_velocity: float = -440.0
+@export var uppercut_horizontal_keep: float = 0.8
+
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
 
 var spawn_position: Vector2
+var can_uppercut: bool = true			#是否能上勾拳
 
 func _ready() -> void:
 	spawn_position = global_position
@@ -41,6 +46,7 @@ func _physics_process(delta: float) -> void:
 func handle_timers(delta: float) -> void:
 	if is_on_floor():
 		coyote_timer = coyote_time
+		can_uppercut = true
 	else:
 		coyote_timer = max(coyote_timer - delta, 0.0)
 
@@ -48,6 +54,7 @@ func handle_timers(delta: float) -> void:
 		jump_buffer_timer = jump_buffer_time
 	else:
 		jump_buffer_timer = max(jump_buffer_timer - delta, 0.0)
+	
 
 func handle_horizontal_movement(delta: float) -> void:
 	var direction := get_horizontal_direction()
@@ -69,10 +76,24 @@ func handle_gravity(delta: float) -> void:
 		velocity.y = 0
 
 func handle_jump() -> void:
-	if jump_buffer_timer > 0.0 and coyote_timer > 0.0:
+	if jump_buffer_timer <= 0.0:
+		return
+	# 普通跳跃：在地面，或者刚离开地面的一小段土狼时间内
+	if coyote_timer > 0.0:
 		velocity.y = jump_velocity
 		jump_buffer_timer = 0.0
 		coyote_timer = 0.0
+		return
+	# 上勾拳 / 二段跳：已经在空中，并且还有上勾拳次数
+	if can_uppercut:
+		do_uppercut()
+		jump_buffer_timer = 0.0
+
+#上勾拳！
+func do_uppercut() -> void:
+	velocity.y = uppercut_velocity
+	velocity.x *= uppercut_horizontal_keep
+	can_uppercut = false
 
 func get_horizontal_direction() -> float:
 	var direction := Input.get_axis(ACTION_MOVE_LEFT, ACTION_MOVE_RIGHT)
@@ -90,6 +111,7 @@ func get_horizontal_direction() -> float:
 func respawn() -> void:
 	global_position = spawn_position
 	velocity = Vector2.ZERO
+	can_uppercut = true
 	
 #更新复活点
 func set_checkpoint(pos: Vector2) -> void:
