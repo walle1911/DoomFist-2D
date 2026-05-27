@@ -23,9 +23,9 @@ var spawn_position: Vector2
 
 func _ready() -> void:
 	spawn_position = global_position
-	print("move_speed = ", move_speed)
-	print("jump_velocity = ", jump_velocity)
-	print("gravity = ", gravity)
+	#print("move_speed = ", move_speed)
+	#print("jump_velocity = ", jump_velocity)
+	#print("gravity = ", gravity)
 
 func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed(ACTION_RESTART):
