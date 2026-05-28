@@ -4,6 +4,8 @@
 [ext_resource type="PackedScene" uid="uid://sb870pah3x7m" path="res://scenes/player/Player.tscn" id="2_m0fkh"]
 [ext_resource type="PackedScene" uid="uid://bkbwwqtml01f2" path="res://scenes/objects/KillZone.tscn" id="3_wirro"]
 [ext_resource type="Script" uid="uid://c3v8o31lkynad" path="res://scripts/objects/KillZone.gd" id="4_jkcq7"]
+[ext_resource type="PackedScene" uid="uid://beklxl0kgkpl4" path="res://scenes/objects/BreakableWall.tscn" id="5_m0fkh"]
+[ext_resource type="Script" uid="uid://ecq6earahjf7" path="res://scripts/objects/BreakableWall.gd" id="6_wirro"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mwytc"]
 size = Vector2(200, 32)
@@ -50,8 +52,11 @@ position = Vector2(283, 107)
 
 [node name="Player" parent="." unique_id=14284688 instance=ExtResource("2_m0fkh")]
 position = Vector2(40, 180)
-move_speed = 300.0
 
 [node name="KillZone" parent="." unique_id=575578226 instance=ExtResource("3_wirro")]
 position = Vector2(240, 330)
 script = ExtResource("4_jkcq7")
+
+[node name="BreakableWall" parent="." unique_id=2049419812 instance=ExtResource("5_m0fkh")]
+position = Vector2(117, 189)
+script = ExtResource("6_wirro")
