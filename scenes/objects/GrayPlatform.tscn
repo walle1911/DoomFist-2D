@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://ch262e20fstje"]
+
+[ext_resource type="Script" uid="uid://c8px6qdvi3vgl" path="res://scripts/objects/GrayPlatform.gd" id="1_ql0lk"]
+
+[node name="GrayPlatform" type="StaticBody2D" unique_id=2126562549]
+script = ExtResource("1_ql0lk")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=328351848]
+
+[node name="Polygon2D" type="Polygon2D" parent="." unique_id=772536174]

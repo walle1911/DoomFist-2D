@@ -62,6 +62,23 @@ var punch_is_full_charged: bool = false
 
 
 # =========================
+# 裂地重拳
+# =========================
+
+@export var slam_x_speed: float = 260.0
+@export var slam_start_y_speed: float = 360.0
+@export var slam_gravity_scale: float = 1.1
+@export var slam_max_down_speed: float = 680.0
+@export var slam_max_duration: float = 0.50
+@export var slam_landing_x_keep: float = 0.25
+
+var can_slam: bool = true
+var is_slamming: bool = false
+var slam_time_left: float = 0.0
+var slam_direction: int = 1
+
+
+# =========================
 # 计时器 / 重生点
 # =========================
 
@@ -83,18 +100,29 @@ func _physics_process(delta: float) -> void:
 
 	if is_punch_dashing:
 		handle_punch_dash(delta)
-	else:
-		handle_punch_input(delta)
 
-		if is_punch_dashing:
-			handle_punch_dash(delta)
+	elif is_slamming:
+		handle_slam(delta)
+
+	else:
+		handle_slam_input()
+
+		if is_slamming:
+			handle_slam(delta)
 		else:
-			handle_horizontal_movement(delta)
-			handle_gravity(delta)
-			handle_jump()
+			handle_punch_input(delta)
+
+			if is_punch_dashing:
+				handle_punch_dash(delta)
+			else:
+				handle_horizontal_movement(delta)
+				handle_gravity(delta)
+				handle_jump()
 
 	move_and_slide()
+
 	check_punch_collisions()
+	check_slam_landing()
 
 
 # =========================
@@ -106,13 +134,14 @@ func handle_timers(delta: float) -> void:
 		coyote_timer = coyote_time
 		can_uppercut = true
 		can_punch = true
+		can_slam = true
 	else:
 		coyote_timer = max(coyote_timer - delta, 0.0)
 
-	# 冲刺阶段暂时不接收 Space 输入。
-	# 因为延冲机制已经搁置，冲刺中按 Space 不应该被缓存成上勾拳。
+	# 冲刺或裂地阶段不缓存 Space。
+	# 防止技能结束后自动触发上勾拳。
 	if Input.is_action_just_pressed("jump"):
-		if not is_punch_dashing:
+		if not is_punch_dashing and not is_slamming:
 			jump_buffer_timer = jump_buffer_time
 	else:
 		jump_buffer_timer = max(jump_buffer_timer - delta, 0.0)
@@ -259,12 +288,74 @@ func check_punch_collisions() -> void:
 		if collider == null:
 			continue
 
-		if collider.is_in_group("breakable_wall"):
+		if collider.has_method("break_wall"):
 			if punch_is_charged:
-				if collider.has_method("break_wall"):
-					collider.break_wall()
+				collider.break_wall()
 			else:
 				end_punch_dash()
+
+
+# =========================
+# 裂地重拳
+# =========================
+
+func handle_slam_input() -> void:
+	if not can_slam:
+		return
+
+	if is_on_floor():
+		return
+
+	if Input.is_action_just_pressed("slam"):
+		start_slam()
+
+
+func start_slam() -> void:
+	is_slamming = true
+	can_slam = false
+	slam_time_left = slam_max_duration
+	slam_direction = facing_direction
+
+	# 清掉跳跃缓冲，避免裂地结束后自动触发跳跃 / 上勾拳
+	jump_buffer_timer = 0.0
+
+	# 斜下砸落：水平朝面向方向，竖直方向快速下落
+	velocity.x = slam_direction * slam_x_speed
+	velocity.y = slam_start_y_speed
+
+
+func handle_slam(delta: float) -> void:
+	slam_time_left -= delta
+
+	# 裂地期间不能用 A/D 改方向，水平速度固定
+	velocity.x = slam_direction * slam_x_speed
+
+	# 裂地是斜下砸落，不是完全直线。这里保留重力，让轨迹逐渐向下压
+	velocity.y += gravity * slam_gravity_scale * delta
+	velocity.y = min(velocity.y, slam_max_down_speed)
+
+	if slam_time_left <= 0.0:
+		end_slam(false)
+
+
+func check_slam_landing() -> void:
+	if not is_slamming:
+		return
+
+	if is_on_floor():
+		end_slam(true)
+
+
+func end_slam(landed: bool) -> void:
+	is_slamming = false
+	slam_time_left = 0.0
+
+	if landed:
+		# 落地后保留少量水平惯性，防止落地后继续横飞太远
+		velocity.x *= slam_landing_x_keep
+	else:
+		# 空中持续时间结束，则恢复普通空中状态，不强行清掉竖直速度
+		velocity.x *= 0.6
 
 
 # =========================
@@ -281,6 +372,7 @@ func respawn() -> void:
 
 	can_uppercut = true
 	can_punch = true
+	can_slam = true
 
 	punch_button_holding = false
 	punch_hold_time = 0.0
@@ -291,3 +383,7 @@ func respawn() -> void:
 
 	punch_is_charged = false
 	punch_is_full_charged = false
+
+	is_slamming = false
+	slam_time_left = 0.0
+	slam_direction = 1

@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://c3v8o31lkynad" path="res://scripts/objects/KillZone.gd" id="4_jkcq7"]
 [ext_resource type="PackedScene" uid="uid://beklxl0kgkpl4" path="res://scenes/objects/BreakableWall.tscn" id="5_m0fkh"]
 [ext_resource type="Script" uid="uid://ecq6earahjf7" path="res://scripts/objects/BreakableWall.gd" id="6_wirro"]
+[ext_resource type="PackedScene" uid="uid://ch262e20fstje" path="res://scenes/objects/GrayPlatform.tscn" id="7_jkcq7"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mwytc"]
 size = Vector2(200, 32)
@@ -46,6 +47,11 @@ shape = SubResource("RectangleShape2D_4mw4c")
 
 [node name="Polygon2D" type="Polygon2D" parent="Platforms/Floor_C" unique_id=401783686]
 polygon = PackedVector2Array(-60, -16, 60, -16, 60, 16, -60, 16)
+
+[node name="GrayPlatform" parent="Platforms" unique_id=2126562549 instance=ExtResource("7_jkcq7")]
+position = Vector2(576, 239)
+platform_size = Vector2(100, 30)
+platform_color = Color(1, 1, 1, 1)
 
 [node name="Checkpoint" parent="." unique_id=167871073 instance=ExtResource("1_r2rjx")]
 position = Vector2(283, 107)
