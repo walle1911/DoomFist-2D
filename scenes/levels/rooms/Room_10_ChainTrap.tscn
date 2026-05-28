@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://2ve0ngbhx32b"]
+
+[ext_resource type="PackedScene" uid="uid://ch262e20fstje" path="res://scenes/objects/GrayPlatform.tscn" id="1_5ylfm"]
+[ext_resource type="PackedScene" uid="uid://sb870pah3x7m" path="res://scenes/player/Player.tscn" id="2_lrq0b"]
+[ext_resource type="PackedScene" uid="uid://cm2q3x0slyyue" path="res://scenes/traps/ChainTrap.tscn" id="3_c801j"]
+
+[node name="Room10ChainTrap" type="Node2D" unique_id=1529591367]
+
+[node name="GrayPlatform" parent="." unique_id=2126562549 instance=ExtResource("1_5ylfm")]
+position = Vector2(79, 221)
+
+[node name="Player" parent="." unique_id=14284688 instance=ExtResource("2_lrq0b")]
+position = Vector2(38, 151)
+
+[node name="GrayPlatform2" parent="." unique_id=1224382140 instance=ExtResource("1_5ylfm")]
+position = Vector2(251, 137)
+platform_size = Vector2(32, 100)
+
+[node name="ChainTrap" parent="." unique_id=1125239169 instance=ExtResource("3_c801j")]
+position = Vector2(202, 156)

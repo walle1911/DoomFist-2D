@@ -46,6 +46,8 @@ var can_uppercut: bool = true
 @export var punch_dash_gravity_scale: float = 0.35
 @export var punch_dash_exit_keep: float = 0.65
 
+
+
 var can_punch: bool = true
 var facing_direction: int = 1
 
@@ -87,16 +89,61 @@ var jump_buffer_timer: float = 0.0
 
 var spawn_position: Vector2
 
+# =========================
+# 格挡
+# =========================
+
+@export var block_duration: float = 0.35
+@export var block_cooldown: float = 0.8
+@export var block_move_multiplier: float = 0.4
+@export var block_area_offset_x: float = 22.0
+
+var can_block: bool = true
+var is_blocking: bool = false
+var block_timer: float = 0.0
+var block_cooldown_timer: float = 0.0
+
+var fist_energy: int = 0
+@export var max_fist_energy: int = 2
+
+
+# =========================
+# 受击 / 睡眠
+# =========================
+
+var is_control_locked: bool = false
+var control_lock_timer: float = 0.0
+var skill_silence_timer: float = 0.0
+var slow_timer: float = 0.0
+var slow_speed_multiplier: float = 1.0
+var is_chained: bool = false
+var chain_timer: float = 0.0
+var chain_hold_position: Vector2 = Vector2.ZERO
+
 
 func _ready() -> void:
 	spawn_position = global_position
-
+	block_area.area_entered.connect(_on_block_area_entered)
+	block_shape.disabled = true
 
 func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("restart"):
 		respawn()
 
 	handle_timers(delta)
+	handle_block_cooldown(delta)
+
+	if is_chained:
+		handle_chain_hold(delta)
+		move_and_slide()
+		return
+
+	if is_control_locked:
+		handle_control_lock(delta)
+		move_and_slide()
+		check_punch_collisions()
+		check_slam_landing()
+		return
 
 	if is_punch_dashing:
 		handle_punch_dash(delta)
@@ -104,25 +151,42 @@ func _physics_process(delta: float) -> void:
 	elif is_slamming:
 		handle_slam(delta)
 
+	elif is_blocking:
+		handle_block(delta)
+		handle_horizontal_movement(delta, block_move_multiplier)
+		handle_gravity(delta)
+
 	else:
-		handle_slam_input()
+		handle_block_input()
 
-		if is_slamming:
-			handle_slam(delta)
+		if is_blocking:
+			handle_block(delta)
+			handle_horizontal_movement(delta, block_move_multiplier)
+			handle_gravity(delta)
 		else:
-			handle_punch_input(delta)
+			handle_slam_input()
 
-			if is_punch_dashing:
-				handle_punch_dash(delta)
+			if is_slamming:
+				handle_slam(delta)
 			else:
-				handle_horizontal_movement(delta)
-				handle_gravity(delta)
-				handle_jump()
+				handle_punch_input(delta)
+
+				if is_punch_dashing:
+					handle_punch_dash(delta)
+				else:
+					handle_horizontal_movement(delta)
+					handle_gravity(delta)
+					handle_jump()
+
+	update_block_area()
 
 	move_and_slide()
 
 	check_punch_collisions()
 	check_slam_landing()
+
+@onready var block_area: Area2D = $BlockArea
+@onready var block_shape: CollisionShape2D = $BlockArea/CollisionShape2D
 
 
 # =========================
@@ -135,27 +199,33 @@ func handle_timers(delta: float) -> void:
 		refresh_normal_skills()
 	else:
 		coyote_timer = max(coyote_timer - delta, 0.0)
-
 	# 冲刺或裂地阶段不缓存 Space。
 	# 防止技能结束后自动触发上勾拳。
 	if Input.is_action_just_pressed("jump"):
-		if not is_punch_dashing and not is_slamming:
+		if not is_punch_dashing and not is_slamming and not is_blocking:
 			jump_buffer_timer = jump_buffer_time
 	else:
 		jump_buffer_timer = max(jump_buffer_timer - delta, 0.0)
 
+	if skill_silence_timer > 0.0:
+		skill_silence_timer = max(skill_silence_timer - delta, 0.0)
 
+	if slow_timer > 0.0:
+		slow_timer = max(slow_timer - delta, 0.0)
+		if slow_timer <= 0.0:
+			slow_speed_multiplier = 1.0
 # =========================
 # 基础移动
 # =========================
 
-func handle_horizontal_movement(delta: float) -> void:
+func handle_horizontal_movement(delta: float, speed_multiplier: float = 1.0) -> void:
 	var direction := Input.get_axis("move_left", "move_right")
 
 	if direction != 0:
 		facing_direction = int(sign(direction))
 
-	var target_speed := direction * move_speed
+	#var target_speed := direction * move_speed * speed_multiplier
+	var target_speed := direction * move_speed * speed_multiplier * slow_speed_multiplier
 
 	var accel := ground_accel
 	if not is_on_floor():
@@ -190,7 +260,7 @@ func handle_jump() -> void:
 		return
 
 	# 上勾拳 / 二段跳
-	if can_uppercut:
+	if skill_silence_timer <= 0.0 and can_uppercut:
 		do_uppercut()
 		jump_buffer_timer = 0.0
 
@@ -206,6 +276,8 @@ func do_uppercut() -> void:
 # =========================
 
 func handle_punch_input(delta: float) -> void:
+	if skill_silence_timer > 0.0:
+		return
 	if not can_punch:
 		return
 
@@ -298,6 +370,8 @@ func check_punch_collisions() -> void:
 # =========================
 
 func handle_slam_input() -> void:
+	if skill_silence_timer > 0.0:
+		return
 	if not can_slam:
 		return
 
@@ -357,13 +431,157 @@ func end_slam(landed: bool) -> void:
 		
 
 # =========================
+# 格挡
+# =========================
+
+func handle_block_cooldown(delta: float) -> void:
+	if block_cooldown_timer > 0.0:
+		block_cooldown_timer = max(block_cooldown_timer - delta, 0.0)
+
+
+func handle_block_input() -> void:
+	if skill_silence_timer > 0.0:
+		return
+	if not can_block:
+		return
+
+	if block_cooldown_timer > 0.0:
+		return
+
+	if Input.is_action_just_pressed("block"):
+		start_block()
+
+
+func start_block() -> void:
+	is_blocking = true
+	can_block = false
+	block_timer = block_duration
+
+	# 防止格挡开始前的 Space 缓冲在结束后触发上勾拳
+	jump_buffer_timer = 0.0
+
+
+func handle_block(delta: float) -> void:
+	block_timer -= delta
+
+	if block_timer <= 0.0:
+		end_block()
+
+
+func end_block() -> void:
+	is_blocking = false
+	block_timer = 0.0
+	block_cooldown_timer = block_cooldown
+
+
+func update_block_area() -> void:
+	block_area.position.x = facing_direction * block_area_offset_x
+	block_shape.disabled = not is_blocking
+
+func _on_block_area_entered(area: Area2D) -> void:
+	if not is_blocking:
+		return
+
+	if area.has_method("on_blocked"):
+		area.on_blocked(self)
+		gain_fist_energy()
+		can_punch = true
+
+func gain_fist_energy() -> void:
+	fist_energy = min(fist_energy + 1, max_fist_energy)
+
+
+# =========================
+# 受控
+# =========================
+func apply_sleep(duration: float) -> void:
+	is_control_locked = true
+	control_lock_timer = duration
+
+	is_punch_dashing = false
+	is_slamming = false
+	is_blocking = false
+
+	punch_button_holding = false
+	jump_buffer_timer = 0.0
+
+	velocity.x = 0.0
+
+
+func handle_control_lock(delta: float) -> void:
+	control_lock_timer -= delta
+
+	handle_gravity(delta)
+	velocity.x = move_toward(velocity.x, 0.0, ground_decel * delta)
+
+	if control_lock_timer <= 0.0:
+		is_control_locked = false
+		control_lock_timer = 0.0
+
+func apply_knockback(direction: Vector2, speed: float, duration: float) -> void:
+	is_control_locked = true
+	control_lock_timer = duration
+
+	is_punch_dashing = false
+	is_slamming = false
+	is_blocking = false
+
+	punch_button_holding = false
+	jump_buffer_timer = 0.0
+	block_shape.disabled = true
+
+	velocity.x = direction.normalized().x * speed
+	velocity.y = min(velocity.y, -120.0)
+func apply_flash(skill_lock_duration: float, slow_duration: float, speed_multiplier: float) -> void:
+	skill_silence_timer = max(skill_silence_timer, skill_lock_duration)
+	slow_timer = max(slow_timer, slow_duration)
+	slow_speed_multiplier = min(slow_speed_multiplier, speed_multiplier)
+
+	is_punch_dashing = false
+	is_slamming = false
+	is_blocking = false
+
+	punch_button_holding = false
+	jump_buffer_timer = 0.0
+	block_shape.disabled = true
+
+func apply_chain_hold(hold_position: Vector2, duration: float) -> void:
+	is_chained = true
+	chain_timer = duration
+	chain_hold_position = hold_position
+
+	is_punch_dashing = false
+	is_slamming = false
+	is_blocking = false
+	is_control_locked = false
+
+	punch_button_holding = false
+	jump_buffer_timer = 0.0
+	block_shape.disabled = true
+
+	velocity = Vector2.ZERO
+	global_position = chain_hold_position
+
+
+func handle_chain_hold(delta: float) -> void:
+	chain_timer -= delta
+
+	global_position = chain_hold_position
+	velocity = Vector2.ZERO
+
+	if chain_timer <= 0.0:
+		is_chained = false
+		chain_timer = 0.0
+
+# =========================
 # 技能刷新
 # =========================
 func refresh_normal_skills() -> void:
 	can_uppercut = true
 	can_punch = true
 	can_slam = true
-
+	can_block = true
+	block_cooldown_timer = 0.0
 
 
 
@@ -375,6 +593,7 @@ func set_checkpoint(pos: Vector2) -> void:
 	spawn_position = pos
 
 func reset_room_objects() -> void:
+	get_tree().call_group("respawn_clear", "queue_free")
 	get_tree().call_group("respawn_reset", "reset_on_respawn")
 
 func respawn() -> void:
@@ -396,5 +615,22 @@ func respawn() -> void:
 	is_slamming = false
 	slam_time_left = 0.0
 	slam_direction = 1
+	
+	is_blocking = false
+	block_timer = 0.0
+	block_cooldown_timer = 0.0
+	can_block = true
+	#block_shape.disabled = true
+	block_shape.set_deferred("disabled", true)
 
+	is_control_locked = false
+	control_lock_timer = 0.0
+	
+	is_chained = false
+	chain_timer = 0.0
+	chain_hold_position = Vector2.ZERO
+
+	skill_silence_timer = 0.0
+	slow_timer = 0.0
+	slow_speed_multiplier = 1.0
 	reset_room_objects()

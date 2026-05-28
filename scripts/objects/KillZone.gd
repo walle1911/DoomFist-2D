@@ -7,4 +7,5 @@ func _ready() -> void:
 
 func _on_body_entered(body: Node) -> void:
 	if body.has_method("respawn"):
-		body.respawn()
+		#body.respawn()
+		body.call_deferred("respawn")

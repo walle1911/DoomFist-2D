@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://bfa8wjrjsahvq"]
 
 [ext_resource type="PackedScene" uid="uid://dfprpwoxlt6hb" path="res://scenes/objects/Checkpoint.tscn" id="1_r2rjx"]
+[ext_resource type="PackedScene" uid="uid://cnwai5t5ryhsd" path="res://scenes/projectiles/SleepDar.tscn" id="1_s40ds"]
 [ext_resource type="PackedScene" uid="uid://sb870pah3x7m" path="res://scenes/player/Player.tscn" id="2_m0fkh"]
 [ext_resource type="PackedScene" uid="uid://bkbwwqtml01f2" path="res://scenes/objects/KillZone.tscn" id="3_wirro"]
 [ext_resource type="Script" uid="uid://c3v8o31lkynad" path="res://scripts/objects/KillZone.gd" id="4_jkcq7"]
@@ -8,6 +9,9 @@
 [ext_resource type="Script" uid="uid://ecq6earahjf7" path="res://scripts/objects/BreakableWall.gd" id="6_wirro"]
 [ext_resource type="PackedScene" uid="uid://ch262e20fstje" path="res://scenes/objects/GrayPlatform.tscn" id="7_jkcq7"]
 [ext_resource type="PackedScene" uid="uid://cik6n6m32m38h" path="res://scenes/objects/Bell.tscn" id="8_7vrrl"]
+[ext_resource type="PackedScene" uid="uid://dfw0vv8a3vl8n" path="res://scenes/projectiles/ProjectileEmitter.tscn.tscn" id="9_s40ds"]
+[ext_resource type="PackedScene" uid="uid://bq4ay0b0gephr" path="res://scenes/projectiles/Javelin.tscn" id="11_5o1vb"]
+[ext_resource type="PackedScene" uid="uid://dlv10obfdlk16" path="res://scenes/projectiles/Flashbang.tscn" id="12_1buie"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mwytc"]
 size = Vector2(200, 32)
@@ -21,6 +25,19 @@ size = Vector2(120, 32)
 [node name="Room01MoveJump" type="Node2D" unique_id=1487911940]
 
 [node name="Platforms" type="Node2D" parent="." unique_id=520028261]
+
+[node name="GrayPlatform" parent="Platforms" unique_id=2126562549 instance=ExtResource("7_jkcq7")]
+position = Vector2(749, 128)
+platform_size = Vector2(100, 32)
+
+[node name="GrayPlatform2" parent="Platforms" unique_id=752004641 instance=ExtResource("7_jkcq7")]
+position = Vector2(1008, 12)
+platform_size = Vector2(32, 100)
+
+[node name="Floor_e" parent="Platforms" unique_id=433224590 instance=ExtResource("7_jkcq7")]
+position = Vector2(505, -21)
+platform_size = Vector2(32, 250)
+platform_color = Color(1, 0.9490196, 1, 1)
 
 [node name="Floor_A" type="StaticBody2D" parent="Platforms" unique_id=1773282287]
 position = Vector2(100, 230)
@@ -49,7 +66,7 @@ shape = SubResource("RectangleShape2D_4mw4c")
 [node name="Polygon2D" type="Polygon2D" parent="Platforms/Floor_C" unique_id=401783686]
 polygon = PackedVector2Array(-60, -16, 60, -16, 60, 16, -60, 16)
 
-[node name="GrayPlatform" parent="Platforms" unique_id=2126562549 instance=ExtResource("7_jkcq7")]
+[node name="Floor_D" parent="Platforms" unique_id=343479655 instance=ExtResource("7_jkcq7")]
 position = Vector2(576, 239)
 platform_size = Vector2(100, 30)
 platform_color = Color(1, 1, 1, 1)
@@ -70,3 +87,16 @@ script = ExtResource("6_wirro")
 
 [node name="Bell" parent="." unique_id=1344844230 instance=ExtResource("8_7vrrl")]
 position = Vector2(428, -45)
+
+[node name="ProjectileEmitter_tscn" parent="." unique_id=1604007596 instance=ExtResource("9_s40ds")]
+position = Vector2(483, 85)
+projectile_scene = ExtResource("1_s40ds")
+
+[node name="ProjectileEmitter_tscn2" parent="." unique_id=1469748033 instance=ExtResource("9_s40ds")]
+position = Vector2(980, 34)
+projectile_scene = ExtResource("11_5o1vb")
+
+[node name="ProjectileEmitter_tscn3" parent="." unique_id=1922943550 instance=ExtResource("9_s40ds")]
+position = Vector2(528, 80)
+projectile_scene = ExtResource("12_1buie")
+direction = Vector2(1, 0)

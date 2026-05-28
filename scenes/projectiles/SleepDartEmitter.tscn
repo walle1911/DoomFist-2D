@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://ct54xcacb0u2g"]
+
+[ext_resource type="Script" uid="uid://bead6slthilrj" path="res://scripts/projectiles/SleepDartEmitter.gd" id="1_qpwe2"]
+
+[node name="SleepDartEmitter" type="Node2D" unique_id=2025354896]
+script = ExtResource("1_qpwe2")
+
+[node name="Polygon2D" type="Polygon2D" parent="." unique_id=60346264]
+color = Color(0.50980395, 0, 0.047058824, 1)
+polygon = PackedVector2Array(-5, -5, 5, -5, 5, 5, -5, 5)

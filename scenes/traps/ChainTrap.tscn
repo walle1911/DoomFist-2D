@@ -1,3 +1,22 @@
-[gd_scene format=3 uid="uid://do7svnet7oinh"]
+[gd_scene format=3 uid="uid://cm2q3x0slyyue"]
 
-[node name="ChainTrap" type="Node2D" unique_id=918121680]
+[ext_resource type="Script" uid="uid://bj0uyxklv5ktv" path="res://scripts/trap/ChainTrap.gd" id="1_i6ng2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_g2nya"]
+size = Vector2(64, 48)
+
+[node name="ChainTrap" type="Area2D" unique_id=1125239169]
+script = ExtResource("1_i6ng2")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=187128394]
+shape = SubResource("RectangleShape2D_g2nya")
+
+[node name="Polygon2D" type="Polygon2D" parent="." unique_id=1460211157]
+polygon = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+
+[node name="GrabPoint" type="Marker2D" parent="." unique_id=1106142031]
+position = Vector2(-48, 0)
+
+[node name="ChainLine" type="Line2D" parent="." unique_id=158740445]
+visible = false
+width = 2.0

@@ -1,3 +1,17 @@
 [gd_scene format=3 uid="uid://bq4ay0b0gephr"]
 
-[node name="Javelin" type="Node2D" unique_id=442670413]
+[ext_resource type="Script" uid="uid://pvbv8x8r5pl4" path="res://scripts/projectiles/JaveLin.gd" id="1_6bq7v"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_isv3b"]
+size = Vector2(24, 6)
+
+[node name="Javelin" type="Area2D" unique_id=1578758794]
+script = ExtResource("1_6bq7v")
+knockback_speed = 800.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=517114420]
+shape = SubResource("RectangleShape2D_isv3b")
+
+[node name="Polygon2D" type="Polygon2D" parent="." unique_id=1414173787]
+color = Color(0, 1, 1, 1)
+polygon = PackedVector2Array(-12, -3, 12, -3, 12, 3, -12, 3)

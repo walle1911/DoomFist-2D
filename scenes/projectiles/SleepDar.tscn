@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://cnwai5t5ryhsd"]
+
+[ext_resource type="Script" uid="uid://qx1btf41biyg" path="res://scripts/projectiles/SleepDart.gd" id="1_fa7im"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rkuvs"]
+size = Vector2(16, 6)
+
+[node name="SleepDar" type="Area2D" unique_id=1987128299]
+script = ExtResource("1_fa7im")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1296920107]
+shape = SubResource("RectangleShape2D_rkuvs")
+
+[node name="Polygon2D" type="Polygon2D" parent="." unique_id=911645557]
+polygon = PackedVector2Array(-8, -3, 8, -3, 8, 3, -8, 3)

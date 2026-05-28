@@ -1,3 +1,24 @@
 [gd_scene format=3 uid="uid://dlv10obfdlk16"]
 
-[node name="Flashbang" type="Node2D" unique_id=1806841948]
+[ext_resource type="Script" uid="uid://dp1d5dqmd87bk" path="res://scripts/projectiles/Flashbang.gd" id="1_d5wh1"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_osmiq"]
+radius = 6.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_d5wh1"]
+radius = 24.0
+
+[node name="Flashbang" type="Area2D" unique_id=1032742051]
+script = ExtResource("1_d5wh1")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=725165230]
+shape = SubResource("CircleShape2D_osmiq")
+
+[node name="Polygon2D" type="Polygon2D" parent="." unique_id=1958899340]
+color = Color(1, 1, 0, 1)
+polygon = PackedVector2Array(0, -6, 6, 0, 0, 6, -6, 0)
+
+[node name="ExplosionArea" type="Area2D" parent="." unique_id=1829869229]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ExplosionArea" unique_id=2022176581]
+shape = SubResource("CircleShape2D_d5wh1")
