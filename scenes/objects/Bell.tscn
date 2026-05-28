@@ -1,3 +1,15 @@
 [gd_scene format=3 uid="uid://cik6n6m32m38h"]
 
-[node name="Bell" type="Node2D" unique_id=96238891]
+[ext_resource type="Script" uid="uid://dq5ncfg0m6esc" path="res://scripts/objects/Bell.gd" id="1_cxvw4"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_abot5"]
+radius = 8.0
+
+[node name="Bell" type="Area2D" unique_id=1344844230]
+script = ExtResource("1_cxvw4")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1753164648]
+shape = SubResource("CircleShape2D_abot5")
+
+[node name="Polygon2D" type="Polygon2D" parent="." unique_id=1352830009]
+polygon = PackedVector2Array(0, -8, 8, 0, 0, 8, -8, 0)

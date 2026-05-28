@@ -1,11 +1,31 @@
-extends Node
+extends Area2D
 
+@onready var collision_shape: CollisionShape2D = $CollisionShape2D
+@onready var polygon: Polygon2D = $Polygon2D
 
-# Called when the node enters the scene tree for the first time.
+var used: bool = false
+
 func _ready() -> void:
-	pass # Replace with function body.
+	add_to_group("respawn_reset")
+	body_entered.connect(_on_body_entered)
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
+func _on_body_entered(body: Node) -> void:
+	if used:
+		return
+
+	if body.has_method("refresh_normal_skills"):
+		body.refresh_normal_skills()
+		used = true
+		hide_bell()
+
+
+func hide_bell() -> void:
+	visible = false
+	collision_shape.set_deferred("disabled", true)
+
+
+func reset_on_respawn() -> void:
+	used = false
+	visible = true
+	collision_shape.set_deferred("disabled", false)

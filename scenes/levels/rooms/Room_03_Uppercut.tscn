@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://beklxl0kgkpl4" path="res://scenes/objects/BreakableWall.tscn" id="5_m0fkh"]
 [ext_resource type="Script" uid="uid://ecq6earahjf7" path="res://scripts/objects/BreakableWall.gd" id="6_wirro"]
 [ext_resource type="PackedScene" uid="uid://ch262e20fstje" path="res://scenes/objects/GrayPlatform.tscn" id="7_jkcq7"]
+[ext_resource type="PackedScene" uid="uid://cik6n6m32m38h" path="res://scenes/objects/Bell.tscn" id="8_7vrrl"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mwytc"]
 size = Vector2(200, 32)
@@ -66,3 +67,6 @@ script = ExtResource("4_jkcq7")
 [node name="BreakableWall" parent="." unique_id=2049419812 instance=ExtResource("5_m0fkh")]
 position = Vector2(117, 189)
 script = ExtResource("6_wirro")
+
+[node name="Bell" parent="." unique_id=1344844230 instance=ExtResource("8_7vrrl")]
+position = Vector2(428, -45)

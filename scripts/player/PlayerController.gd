@@ -132,9 +132,7 @@ func _physics_process(delta: float) -> void:
 func handle_timers(delta: float) -> void:
 	if is_on_floor():
 		coyote_timer = coyote_time
-		can_uppercut = true
-		can_punch = true
-		can_slam = true
+		refresh_normal_skills()
 	else:
 		coyote_timer = max(coyote_timer - delta, 0.0)
 
@@ -356,6 +354,17 @@ func end_slam(landed: bool) -> void:
 	else:
 		# 空中持续时间结束，则恢复普通空中状态，不强行清掉竖直速度
 		velocity.x *= 0.6
+		
+
+# =========================
+# 技能刷新
+# =========================
+func refresh_normal_skills() -> void:
+	can_uppercut = true
+	can_punch = true
+	can_slam = true
+
+
 
 
 # =========================
@@ -365,14 +374,14 @@ func end_slam(landed: bool) -> void:
 func set_checkpoint(pos: Vector2) -> void:
 	spawn_position = pos
 
+func reset_room_objects() -> void:
+	get_tree().call_group("respawn_reset", "reset_on_respawn")
 
 func respawn() -> void:
 	global_position = spawn_position
 	velocity = Vector2.ZERO
 
-	can_uppercut = true
-	can_punch = true
-	can_slam = true
+	refresh_normal_skills()
 
 	punch_button_holding = false
 	punch_hold_time = 0.0
@@ -387,3 +396,5 @@ func respawn() -> void:
 	is_slamming = false
 	slam_time_left = 0.0
 	slam_direction = 1
+
+	reset_room_objects()
