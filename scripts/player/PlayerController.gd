@@ -151,6 +151,7 @@ var chain_swing_direction: float = 1.0
 @export var afterimage_interval: float = 0.035
 @export var afterimage_lifetime: float = 0.18
 @export var slam_impact_lifetime: float = 0.22
+@export var character_sprite_base_scale: Vector2 = Vector2(0.5, 0.5)
 @export var visual_pose_lerp_speed: float = 18.0
 @export var visual_idle_bob_amount: float = 1.2
 @export var visual_idle_bob_speed: float = 5.0
@@ -158,16 +159,24 @@ var chain_swing_direction: float = 1.0
 @export var visual_run_bob_speed: float = 14.0
 @export var visual_run_lean_degrees: float = 5.0
 @export var visual_air_lean_degrees: float = 6.0
+@export var camera_shake_frequency: float = 95.0
 
 var afterimage_timer: float = 0.0
 var visual_anim_time: float = 0.0
 var chain_visual_tilt: float = 0.0
+var camera_shake_time_left: float = 0.0
+var camera_shake_duration: float = 0.0
+var camera_shake_strength: float = 0.0
+var camera_shake_elapsed: float = 0.0
+var camera_base_offset: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
 	spawn_position = global_position
 	block_area.area_entered.connect(_on_block_area_entered)
 	block_shape.disabled = true
+	if player_camera != null:
+		camera_base_offset = player_camera.offset
 	update_skill_visuals(0.0)
 
 func _physics_process(delta: float) -> void:
@@ -181,6 +190,7 @@ func _physics_process(delta: float) -> void:
 		handle_chain_hold(delta)
 		move_and_slide()
 		update_skill_visuals(delta)
+		update_camera_feedback(delta)
 		return
 
 	if is_control_locked:
@@ -189,6 +199,7 @@ func _physics_process(delta: float) -> void:
 		check_punch_collisions()
 		check_slam_landing()
 		update_skill_visuals(delta)
+		update_camera_feedback(delta)
 		return
 
 	if is_punch_dashing:
@@ -231,9 +242,12 @@ func _physics_process(delta: float) -> void:
 	check_punch_collisions()
 	check_slam_landing()
 	update_skill_visuals(delta)
+	update_camera_feedback(delta)
 
 @onready var block_area: Area2D = $BlockArea
 @onready var block_shape: CollisionShape2D = $BlockArea/CollisionShape2D
+@onready var player_camera: Camera2D = get_node_or_null("Camera2D") as Camera2D
+@onready var character_sprite: AnimatedSprite2D = get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
 @onready var body_polygon: Polygon2D = get_node_or_null("Polygon2D") as Polygon2D
 @onready var block_visual: CanvasItem = get_node_or_null("BlockArea/BlockVisual") as CanvasItem
 @onready var punch_charge_visual: Polygon2D = get_node_or_null("PunchChargeVisual") as Polygon2D
@@ -320,6 +334,7 @@ func do_uppercut() -> void:
 	velocity.x *= uppercut_horizontal_keep
 	can_uppercut = false
 	spawn_burst_effect(global_position + Vector2(0.0, 16.0), Color(0.55, 0.85, 1.0, 0.55), Vector2(30.0, 10.0), 0.16)
+	add_camera_shake(1.5, 0.10)
 
 
 # =========================
@@ -374,6 +389,13 @@ func start_punch_dash(is_charged: bool, is_full_charged: bool) -> void:
 	velocity.x = punch_dash_direction * punch_current_speed
 	spawn_punch_afterimage()
 
+	if is_full_charged:
+		add_camera_shake(3.2, 0.14)
+	elif is_charged:
+		add_camera_shake(2.4, 0.12)
+	else:
+		add_camera_shake(1.4, 0.08)
+
 
 func handle_punch_dash(delta: float) -> void:
 	velocity.x = punch_dash_direction * punch_current_speed
@@ -418,8 +440,10 @@ func check_punch_collisions() -> void:
 		if collider.has_method("break_wall"):
 			if punch_is_charged:
 				collider.break_wall()
+				add_camera_shake(4.0, 0.16)
 			else:
 				end_punch_dash()
+				add_camera_shake(2.0, 0.10)
 
 
 # =========================
@@ -445,6 +469,7 @@ func start_slam() -> void:
 	slam_time_left = slam_max_duration
 	slam_direction = facing_direction
 	spawn_burst_effect(global_position + Vector2(0.0, 8.0), Color(0.25, 0.55, 1.0, 0.45), Vector2(18.0, 26.0), 0.16)
+	add_camera_shake(1.8, 0.10)
 
 	# 清掉跳跃缓冲，避免裂地结束后自动触发跳跃 / 上勾拳
 	jump_buffer_timer = 0.0
@@ -484,6 +509,7 @@ func end_slam(landed: bool) -> void:
 		# 落地后保留少量水平惯性，防止落地后继续横飞太远
 		velocity.x *= slam_landing_x_keep
 		spawn_burst_effect(global_position + Vector2(0.0, 22.0), Color(0.45, 0.75, 1.0, 0.55), Vector2(58.0, 10.0), slam_impact_lifetime)
+		add_camera_shake(4.5, 0.18)
 	else:
 		# 空中持续时间结束，则恢复普通空中状态，不强行清掉竖直速度
 		velocity.x *= 0.6
@@ -516,6 +542,7 @@ func start_block() -> void:
 	can_block = false
 	block_timer = block_duration
 	spawn_burst_effect(global_position, Color(0.25, 0.85, 1.0, 0.35), Vector2(42.0, 54.0), 0.12)
+	add_camera_shake(1.0, 0.08)
 
 	# 防止格挡开始前的 Space 缓冲在结束后触发上勾拳
 	jump_buffer_timer = 0.0
@@ -547,6 +574,7 @@ func _on_block_area_entered(area: Area2D) -> void:
 		area.on_blocked(self)
 		gain_fist_energy()
 		can_punch = true
+		add_camera_shake(2.2, 0.10)
 
 func gain_fist_energy() -> void:
 	fist_energy = min(fist_energy + 1, max_fist_energy)
@@ -568,6 +596,7 @@ func apply_sleep(duration: float) -> void:
 	block_shape.set_deferred("disabled", true)
 
 	velocity.x = 0.0
+	add_camera_shake(1.8, 0.12)
 
 
 func handle_control_lock(delta: float) -> void:
@@ -594,6 +623,7 @@ func apply_knockback(direction: Vector2, speed: float, duration: float) -> void:
 
 	velocity.x = direction.normalized().x * speed
 	velocity.y = min(velocity.y, -120.0)
+	add_camera_shake(3.0, 0.14)
 
 
 func apply_flash(skill_lock_duration: float, slow_duration: float, speed_multiplier: float) -> void:
@@ -608,6 +638,7 @@ func apply_flash(skill_lock_duration: float, slow_duration: float, speed_multipl
 	punch_button_holding = false
 	jump_buffer_timer = 0.0
 	block_shape.set_deferred("disabled", true)
+	add_camera_shake(1.6, 0.12)
 
 
 func apply_chain_hold(hold_position: Vector2, duration: float) -> void:
@@ -631,6 +662,7 @@ func apply_chain_hold(hold_position: Vector2, duration: float) -> void:
 	block_shape.set_deferred("disabled", true)
 
 	velocity = chain_velocity
+	add_camera_shake(2.4, 0.12)
 
 
 func handle_chain_hold(delta: float) -> void:
@@ -754,15 +786,70 @@ func debug_flag(value: bool) -> String:
 func update_skill_visuals(delta: float) -> void:
 	visual_anim_time += delta
 
+	if character_sprite != null:
+		update_character_sprite(delta)
+
 	if body_polygon != null:
 		body_polygon.color = get_body_visual_color()
-		update_placeholder_pose(delta)
+
+		if character_sprite == null:
+			update_placeholder_pose(delta)
 
 	if block_visual != null:
 		block_visual.visible = is_blocking
 
 	if punch_charge_visual != null:
 		update_punch_charge_visual(delta)
+
+
+func update_character_sprite(delta: float) -> void:
+	var animation_name: String = get_character_animation_name()
+
+	if character_sprite.animation != animation_name:
+		character_sprite.play(animation_name)
+
+	character_sprite.flip_h = facing_direction < 0
+	update_character_sprite_pose(delta)
+
+
+func get_character_animation_name() -> String:
+	if is_chained:
+		return "chained"
+	if is_blocking:
+		return "block"
+	if is_slamming:
+		return "slam"
+	if is_punch_dashing:
+		return "punch_dash"
+	if punch_button_holding:
+		return "punch_charge"
+	if not is_on_floor():
+		if velocity.y < 0.0:
+			if not can_uppercut:
+				return "uppercut"
+
+			return "jump"
+
+		return "fall"
+	if absf(velocity.x) > 10.0:
+		return "run"
+
+	return "idle"
+
+
+func update_character_sprite_pose(delta: float) -> void:
+	var pose: Dictionary = get_placeholder_pose()
+	var target_position: Vector2 = pose["position"] as Vector2
+	var target_scale: Vector2 = pose["scale"] as Vector2
+	var target_rotation: float = float(pose["rotation"])
+	var pose_weight: float = visual_pose_lerp_speed * delta
+
+	if pose_weight > 1.0:
+		pose_weight = 1.0
+
+	character_sprite.position = character_sprite.position.lerp(Vector2(0.0, -5.0) + target_position, pose_weight)
+	character_sprite.scale = character_sprite.scale.lerp(character_sprite_base_scale * target_scale, pose_weight)
+	character_sprite.rotation = lerpf(character_sprite.rotation, target_rotation, pose_weight)
 
 
 func get_body_visual_color() -> Color:
@@ -903,6 +990,41 @@ func spawn_burst_effect(effect_position: Vector2, effect_color: Color, effect_si
 	tween.tween_callback(burst.queue_free)
 
 
+func add_camera_shake(strength: float, duration: float) -> void:
+	if player_camera == null:
+		return
+
+	camera_shake_strength = max(camera_shake_strength, strength)
+	camera_shake_duration = max(camera_shake_duration, duration)
+	camera_shake_time_left = max(camera_shake_time_left, duration)
+
+
+func update_camera_feedback(delta: float) -> void:
+	if player_camera == null:
+		return
+
+	if camera_shake_time_left <= 0.0:
+		player_camera.offset = camera_base_offset
+		return
+
+	camera_shake_time_left = max(camera_shake_time_left - delta, 0.0)
+	camera_shake_elapsed += delta
+
+	var shake_ratio: float = 1.0
+	if camera_shake_duration > 0.0:
+		shake_ratio = camera_shake_time_left / camera_shake_duration
+
+	var current_strength: float = camera_shake_strength * shake_ratio * shake_ratio
+	var shake_x: float = sin(camera_shake_elapsed * camera_shake_frequency) * current_strength
+	var shake_y: float = cos(camera_shake_elapsed * camera_shake_frequency * 1.37) * current_strength
+	player_camera.offset = camera_base_offset + Vector2(shake_x, shake_y)
+
+	if camera_shake_time_left <= 0.0:
+		camera_shake_strength = 0.0
+		camera_shake_duration = 0.0
+		player_camera.offset = camera_base_offset
+
+
 
 # =========================
 # 检查点 / 重生
@@ -951,6 +1073,13 @@ func respawn() -> void:
 	chain_velocity = Vector2.ZERO
 	chain_elapsed = 0.0
 	reset_chain_visual_tilt()
+
+	camera_shake_time_left = 0.0
+	camera_shake_duration = 0.0
+	camera_shake_strength = 0.0
+	camera_shake_elapsed = 0.0
+	if player_camera != null:
+		player_camera.offset = camera_base_offset
 
 	skill_silence_timer = 0.0
 	slow_timer = 0.0
