@@ -89,7 +89,7 @@ script = ExtResource("6_wirro")
 position = Vector2(428, -45)
 
 [node name="ProjectileEmitter_tscn" parent="." unique_id=1604007596 instance=ExtResource("9_s40ds")]
-position = Vector2(483, 85)
+position = Vector2(424, 43)
 projectile_scene = ExtResource("1_s40ds")
 
 [node name="ProjectileEmitter_tscn2" parent="." unique_id=1469748033 instance=ExtResource("9_s40ds")]

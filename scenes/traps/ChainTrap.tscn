@@ -15,7 +15,7 @@ shape = SubResource("RectangleShape2D_g2nya")
 polygon = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 
 [node name="GrabPoint" type="Marker2D" parent="." unique_id=1106142031]
-position = Vector2(-48, 0)
+position = Vector2(-55, 0)
 
 [node name="ChainLine" type="Line2D" parent="." unique_id=158740445]
 visible = false

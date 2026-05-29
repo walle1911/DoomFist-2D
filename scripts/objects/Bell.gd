@@ -1,7 +1,6 @@
 extends Area2D
 
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
-@onready var polygon: Polygon2D = $Polygon2D
 
 var used: bool = false
 

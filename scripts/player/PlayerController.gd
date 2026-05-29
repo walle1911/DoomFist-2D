@@ -116,9 +116,24 @@ var control_lock_timer: float = 0.0
 var skill_silence_timer: float = 0.0
 var slow_timer: float = 0.0
 var slow_speed_multiplier: float = 1.0
+
+@export var chain_body_attach_offset: Vector2 = Vector2(0.0, -24.0)
+@export var chain_rope_length: float = 8.0
+@export var chain_pull_stiffness: float = 85.0
+@export var chain_pull_damping: float = 7.0
+@export var chain_max_pull_speed: float = 520.0
+@export var chain_release_velocity_keep: float = 0.25
+@export var chain_swing_amplitude: float = 8.0
+@export var chain_swing_frequency: float = 7.0
+@export var chain_bob_amplitude: float = 2.0
+@export var chain_visual_tilt_degrees: float = 8.0
+
 var is_chained: bool = false
 var chain_timer: float = 0.0
-var chain_hold_position: Vector2 = Vector2.ZERO
+var chain_anchor_position: Vector2 = Vector2.ZERO
+var chain_velocity: Vector2 = Vector2.ZERO
+var chain_elapsed: float = 0.0
+var chain_swing_direction: float = 1.0
 
 
 func _ready() -> void:
@@ -187,6 +202,7 @@ func _physics_process(delta: float) -> void:
 
 @onready var block_area: Area2D = $BlockArea
 @onready var block_shape: CollisionShape2D = $BlockArea/CollisionShape2D
+@onready var body_polygon: Polygon2D = get_node_or_null("Polygon2D") as Polygon2D
 
 
 # =========================
@@ -472,6 +488,7 @@ func end_block() -> void:
 	is_blocking = false
 	block_timer = 0.0
 	block_cooldown_timer = block_cooldown
+	block_shape.set_deferred("disabled", true)
 
 
 func update_block_area() -> void:
@@ -504,6 +521,7 @@ func apply_sleep(duration: float) -> void:
 
 	punch_button_holding = false
 	jump_buffer_timer = 0.0
+	block_shape.set_deferred("disabled", true)
 
 	velocity.x = 0.0
 
@@ -528,10 +546,12 @@ func apply_knockback(direction: Vector2, speed: float, duration: float) -> void:
 
 	punch_button_holding = false
 	jump_buffer_timer = 0.0
-	block_shape.disabled = true
+	block_shape.set_deferred("disabled", true)
 
 	velocity.x = direction.normalized().x * speed
 	velocity.y = min(velocity.y, -120.0)
+
+
 func apply_flash(skill_lock_duration: float, slow_duration: float, speed_multiplier: float) -> void:
 	skill_silence_timer = max(skill_silence_timer, skill_lock_duration)
 	slow_timer = max(slow_timer, slow_duration)
@@ -543,12 +563,19 @@ func apply_flash(skill_lock_duration: float, slow_duration: float, speed_multipl
 
 	punch_button_holding = false
 	jump_buffer_timer = 0.0
-	block_shape.disabled = true
+	block_shape.set_deferred("disabled", true)
+
 
 func apply_chain_hold(hold_position: Vector2, duration: float) -> void:
 	is_chained = true
 	chain_timer = duration
-	chain_hold_position = hold_position
+	chain_anchor_position = hold_position
+	chain_velocity = velocity * 0.25
+	chain_elapsed = 0.0
+	chain_swing_direction = signf(global_position.x - hold_position.x)
+
+	if chain_swing_direction == 0.0:
+		chain_swing_direction = float(facing_direction)
 
 	is_punch_dashing = false
 	is_slamming = false
@@ -557,21 +584,77 @@ func apply_chain_hold(hold_position: Vector2, duration: float) -> void:
 
 	punch_button_holding = false
 	jump_buffer_timer = 0.0
-	block_shape.disabled = true
+	block_shape.set_deferred("disabled", true)
 
-	velocity = Vector2.ZERO
-	global_position = chain_hold_position
+	velocity = chain_velocity
 
 
 func handle_chain_hold(delta: float) -> void:
 	chain_timer -= delta
+	chain_elapsed += delta
 
-	global_position = chain_hold_position
-	velocity = Vector2.ZERO
+	var body_target_position: Vector2 = get_chain_body_target_position()
+	var pull_vector: Vector2 = body_target_position - global_position
+	chain_velocity += pull_vector * chain_pull_stiffness * delta
+
+	var damping_weight: float = chain_pull_damping * delta
+	if damping_weight > 1.0:
+		damping_weight = 1.0
+
+	chain_velocity = chain_velocity.lerp(Vector2.ZERO, damping_weight)
+
+	if chain_velocity.length() > chain_max_pull_speed:
+		chain_velocity = chain_velocity.normalized() * chain_max_pull_speed
+
+	velocity = chain_velocity
+	update_chain_visual_tilt()
 
 	if chain_timer <= 0.0:
-		is_chained = false
-		chain_timer = 0.0
+		end_chain_hold()
+
+
+func get_chain_body_target_position() -> Vector2:
+	var attach_target_position: Vector2 = get_chain_attach_target_position()
+
+	return attach_target_position - chain_body_attach_offset
+
+
+func get_chain_attach_target_position() -> Vector2:
+	var swing: float = sin(chain_elapsed * chain_swing_frequency) * chain_swing_amplitude * chain_swing_direction
+	var bob: float = absf(sin(chain_elapsed * chain_swing_frequency * 0.5)) * chain_bob_amplitude
+
+	return chain_anchor_position + Vector2(swing, chain_rope_length + bob)
+
+
+func get_chain_attach_position() -> Vector2:
+	if is_chained:
+		return global_position + chain_body_attach_offset
+
+	return global_position
+
+
+func update_chain_visual_tilt() -> void:
+	if body_polygon == null:
+		return
+
+	var speed_ratio: float = chain_velocity.x / chain_max_pull_speed
+	speed_ratio = clampf(speed_ratio, -1.0, 1.0)
+	body_polygon.rotation = deg_to_rad(chain_visual_tilt_degrees) * speed_ratio
+
+
+func reset_chain_visual_tilt() -> void:
+	if body_polygon == null:
+		return
+
+	body_polygon.rotation = 0.0
+
+
+func end_chain_hold() -> void:
+	is_chained = false
+	chain_timer = 0.0
+	velocity = chain_velocity * chain_release_velocity_keep
+	chain_velocity = Vector2.ZERO
+	reset_chain_visual_tilt()
 
 # =========================
 # 技能刷新
@@ -628,7 +711,10 @@ func respawn() -> void:
 	
 	is_chained = false
 	chain_timer = 0.0
-	chain_hold_position = Vector2.ZERO
+	chain_anchor_position = Vector2.ZERO
+	chain_velocity = Vector2.ZERO
+	chain_elapsed = 0.0
+	reset_chain_visual_tilt()
 
 	skill_silence_timer = 0.0
 	slow_timer = 0.0

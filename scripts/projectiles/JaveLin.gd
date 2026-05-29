@@ -22,13 +22,18 @@ func _physics_process(delta: float) -> void:
 
 
 func setup(new_direction: Vector2) -> void:
+	if new_direction.is_zero_approx():
+		direction = Vector2.LEFT
+		return
+
 	direction = new_direction.normalized()
 
 
 func _on_body_entered(body: Node) -> void:
 	if body.has_method("apply_knockback"):
 		body.apply_knockback(direction, knockback_speed, knockback_duration)
-		queue_free()
+
+	queue_free()
 
 
 func on_blocked(_blocker: Node) -> void:
