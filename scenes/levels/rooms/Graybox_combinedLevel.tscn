@@ -1,0 +1,61 @@
+[gd_scene format=3 uid="uid://dgo3mhf54jr7j"]
+
+[ext_resource type="PackedScene" uid="uid://ch262e20fstje" path="res://scenes/objects/GrayPlatform.tscn" id="1_i5m6v"]
+[ext_resource type="PackedScene" uid="uid://dfw0vv8a3vl8n" path="res://scenes/projectiles/ProjectileEmitter.tscn.tscn" id="2_a27s4"]
+[ext_resource type="PackedScene" uid="uid://cnwai5t5ryhsd" path="res://scenes/projectiles/SleepDar.tscn" id="3_3f0kl"]
+[ext_resource type="PackedScene" uid="uid://bq4ay0b0gephr" path="res://scenes/projectiles/Javelin.tscn" id="4_4mqf7"]
+[ext_resource type="PackedScene" uid="uid://dlv10obfdlk16" path="res://scenes/projectiles/Flashbang.tscn" id="5_qrjqo"]
+[ext_resource type="PackedScene" uid="uid://cm2q3x0slyyue" path="res://scenes/traps/ChainTrap.tscn" id="6_33fcd"]
+[ext_resource type="PackedScene" uid="uid://sb870pah3x7m" path="res://scenes/player/Player.tscn" id="7_3f0kl"]
+
+[node name="GrayboxCombinedLevel" type="Node2D" unique_id=2097146508]
+
+[node name="GrayPlatform" parent="." unique_id=2126562549 instance=ExtResource("1_i5m6v")]
+position = Vector2(80, 253)
+
+[node name="GrayPlatform2" parent="." unique_id=995623703 instance=ExtResource("1_i5m6v")]
+position = Vector2(288, 161)
+
+[node name="GrayPlatform3" parent="." unique_id=55728234 instance=ExtResource("1_i5m6v")]
+position = Vector2(16, 89)
+platform_size = Vector2(32, 100)
+
+[node name="GrayPlatform4" parent="." unique_id=392247601 instance=ExtResource("1_i5m6v")]
+position = Vector2(479, 234)
+
+[node name="GrayPlatform5" parent="." unique_id=709697772 instance=ExtResource("1_i5m6v")]
+position = Vector2(678, 111)
+
+[node name="GrayPlatform6" parent="." unique_id=1036552996 instance=ExtResource("1_i5m6v")]
+position = Vector2(880, 134)
+platform_size = Vector2(32, 160)
+
+[node name="GrayPlatform7" parent="." unique_id=1770657245 instance=ExtResource("1_i5m6v")]
+position = Vector2(994, 306)
+
+[node name="ProjectileEmitter_tscn" parent="." unique_id=1604007596 instance=ExtResource("2_a27s4")]
+position = Vector2(40, 108)
+projectile_scene = ExtResource("3_3f0kl")
+direction = Vector2(1, 0)
+
+[node name="ProjectileEmitter_tscn2" parent="." unique_id=1931489319 instance=ExtResource("2_a27s4")]
+position = Vector2(856, 204)
+projectile_scene = ExtResource("4_4mqf7")
+
+[node name="GrayPlatform8" parent="." unique_id=448644074 instance=ExtResource("1_i5m6v")]
+position = Vector2(1149, 185)
+platform_size = Vector2(32, 160)
+
+[node name="GrayPlatform9" parent="." unique_id=1798332098 instance=ExtResource("1_i5m6v")]
+position = Vector2(1326, 167)
+
+[node name="ProjectileEmitter_tscn3" parent="." unique_id=1425892415 instance=ExtResource("2_a27s4")]
+position = Vector2(1169, 134)
+projectile_scene = ExtResource("5_qrjqo")
+direction = Vector2(1, 0)
+
+[node name="ChainTrap" parent="." unique_id=1125239169 instance=ExtResource("6_33fcd")]
+position = Vector2(1123, 142)
+
+[node name="Player" parent="." unique_id=14284688 instance=ExtResource("7_3f0kl")]
+position = Vector2(35, 181)

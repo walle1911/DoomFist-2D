@@ -1,6 +1,7 @@
-[gd_scene format=3 uid="uid://sb870pah3x7m"]
+[gd_scene load_steps=5 format=3 uid="uid://sb870pah3x7m"]
 
 [ext_resource type="Script" uid="uid://h3uqre6i5ueq" path="res://scripts/player/PlayerController.gd" id="1_wr5hl"]
+[ext_resource type="PackedScene" uid="uid://bhnq2orl6ikq5" path="res://scenes/ui/HUD.tscn" id="2_gx83b"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_o8nba"]
 size = Vector2(20, 40)
@@ -26,7 +27,20 @@ shape = SubResource("RectangleShape2D_o8nba")
 position = Vector2(0, -4.5)
 shape = SubResource("RectangleShape2D_wr5hl")
 
+[node name="BlockVisual" type="Polygon2D" parent="BlockArea"]
+visible = false
+position = Vector2(0, -4.5)
+color = Color(0.25, 0.75, 1, 0.38)
+polygon = PackedVector2Array(-23, -23.5, 23, -23.5, 23, 23.5, -23, 23.5)
+
 [node name="Polygon2D" type="Polygon2D" parent="." unique_id=1785172194]
 color = Color(0.8332228, 0.724551, 0.39851984, 1)
 polygon = PackedVector2Array(-16, -28, 16, -28, 16, 20, -16, 20)
 uv = PackedVector2Array(130, -35.5, 296.5, 47.5, 329, -58.5)
+
+[node name="PunchChargeVisual" type="Polygon2D" parent="."]
+visible = false
+color = Color(1, 0.5, 0.15, 0.35)
+polygon = PackedVector2Array(0, -34, 25, -12, 25, 20, 0, 30, -25, 20, -25, -12)
+
+[node name="HUD" parent="." instance=ExtResource("2_gx83b")]

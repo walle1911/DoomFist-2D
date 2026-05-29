@@ -136,10 +136,39 @@ var chain_elapsed: float = 0.0
 var chain_swing_direction: float = 1.0
 
 
+# =========================
+# 临时美术表现
+# =========================
+
+@export var visual_base_color: Color = Color(0.83, 0.72, 0.40, 1.0)
+@export var visual_punch_color: Color = Color(1.0, 0.52, 0.14, 1.0)
+@export var visual_full_charge_color: Color = Color(1.0, 0.88, 0.18, 1.0)
+@export var visual_slam_color: Color = Color(0.35, 0.68, 1.0, 1.0)
+@export var visual_block_color: Color = Color(0.35, 0.9, 1.0, 1.0)
+@export var visual_locked_color: Color = Color(0.62, 0.64, 0.74, 1.0)
+@export var visual_chain_color: Color = Color(0.58, 0.78, 1.0, 1.0)
+@export var visual_silence_color: Color = Color(0.9, 0.9, 0.35, 1.0)
+@export var afterimage_interval: float = 0.035
+@export var afterimage_lifetime: float = 0.18
+@export var slam_impact_lifetime: float = 0.22
+@export var visual_pose_lerp_speed: float = 18.0
+@export var visual_idle_bob_amount: float = 1.2
+@export var visual_idle_bob_speed: float = 5.0
+@export var visual_run_bob_amount: float = 2.4
+@export var visual_run_bob_speed: float = 14.0
+@export var visual_run_lean_degrees: float = 5.0
+@export var visual_air_lean_degrees: float = 6.0
+
+var afterimage_timer: float = 0.0
+var visual_anim_time: float = 0.0
+var chain_visual_tilt: float = 0.0
+
+
 func _ready() -> void:
 	spawn_position = global_position
 	block_area.area_entered.connect(_on_block_area_entered)
 	block_shape.disabled = true
+	update_skill_visuals(0.0)
 
 func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("restart"):
@@ -151,6 +180,7 @@ func _physics_process(delta: float) -> void:
 	if is_chained:
 		handle_chain_hold(delta)
 		move_and_slide()
+		update_skill_visuals(delta)
 		return
 
 	if is_control_locked:
@@ -158,6 +188,7 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		check_punch_collisions()
 		check_slam_landing()
+		update_skill_visuals(delta)
 		return
 
 	if is_punch_dashing:
@@ -199,10 +230,13 @@ func _physics_process(delta: float) -> void:
 
 	check_punch_collisions()
 	check_slam_landing()
+	update_skill_visuals(delta)
 
 @onready var block_area: Area2D = $BlockArea
 @onready var block_shape: CollisionShape2D = $BlockArea/CollisionShape2D
 @onready var body_polygon: Polygon2D = get_node_or_null("Polygon2D") as Polygon2D
+@onready var block_visual: CanvasItem = get_node_or_null("BlockArea/BlockVisual") as CanvasItem
+@onready var punch_charge_visual: Polygon2D = get_node_or_null("PunchChargeVisual") as Polygon2D
 
 
 # =========================
@@ -285,6 +319,7 @@ func do_uppercut() -> void:
 	velocity.y = uppercut_velocity
 	velocity.x *= uppercut_horizontal_keep
 	can_uppercut = false
+	spawn_burst_effect(global_position + Vector2(0.0, 16.0), Color(0.55, 0.85, 1.0, 0.55), Vector2(30.0, 10.0), 0.16)
 
 
 # =========================
@@ -337,10 +372,16 @@ func start_punch_dash(is_charged: bool, is_full_charged: bool) -> void:
 	# 冲刺开始时先拉平竖直速度，让重拳是直接水平打出去
 	velocity.y = 0.0
 	velocity.x = punch_dash_direction * punch_current_speed
+	spawn_punch_afterimage()
 
 
 func handle_punch_dash(delta: float) -> void:
 	velocity.x = punch_dash_direction * punch_current_speed
+	afterimage_timer -= delta
+
+	if afterimage_timer <= 0.0:
+		spawn_punch_afterimage()
+		afterimage_timer = afterimage_interval
 
 	# 冲刺阶段仍受弱重力影响，角色会轻微下垂
 	velocity.y += gravity * punch_dash_gravity_scale * delta
@@ -403,6 +444,7 @@ func start_slam() -> void:
 	can_slam = false
 	slam_time_left = slam_max_duration
 	slam_direction = facing_direction
+	spawn_burst_effect(global_position + Vector2(0.0, 8.0), Color(0.25, 0.55, 1.0, 0.45), Vector2(18.0, 26.0), 0.16)
 
 	# 清掉跳跃缓冲，避免裂地结束后自动触发跳跃 / 上勾拳
 	jump_buffer_timer = 0.0
@@ -441,6 +483,7 @@ func end_slam(landed: bool) -> void:
 	if landed:
 		# 落地后保留少量水平惯性，防止落地后继续横飞太远
 		velocity.x *= slam_landing_x_keep
+		spawn_burst_effect(global_position + Vector2(0.0, 22.0), Color(0.45, 0.75, 1.0, 0.55), Vector2(58.0, 10.0), slam_impact_lifetime)
 	else:
 		# 空中持续时间结束，则恢复普通空中状态，不强行清掉竖直速度
 		velocity.x *= 0.6
@@ -472,6 +515,7 @@ func start_block() -> void:
 	is_blocking = true
 	can_block = false
 	block_timer = block_duration
+	spawn_burst_effect(global_position, Color(0.25, 0.85, 1.0, 0.35), Vector2(42.0, 54.0), 0.12)
 
 	# 防止格挡开始前的 Space 缓冲在结束后触发上勾拳
 	jump_buffer_timer = 0.0
@@ -634,19 +678,13 @@ func get_chain_attach_position() -> Vector2:
 
 
 func update_chain_visual_tilt() -> void:
-	if body_polygon == null:
-		return
-
 	var speed_ratio: float = chain_velocity.x / chain_max_pull_speed
 	speed_ratio = clampf(speed_ratio, -1.0, 1.0)
-	body_polygon.rotation = deg_to_rad(chain_visual_tilt_degrees) * speed_ratio
+	chain_visual_tilt = deg_to_rad(chain_visual_tilt_degrees) * speed_ratio
 
 
 func reset_chain_visual_tilt() -> void:
-	if body_polygon == null:
-		return
-
-	body_polygon.rotation = 0.0
+	chain_visual_tilt = 0.0
 
 
 func end_chain_hold() -> void:
@@ -665,6 +703,204 @@ func refresh_normal_skills() -> void:
 	can_slam = true
 	can_block = true
 	block_cooldown_timer = 0.0
+
+
+func get_debug_text() -> String:
+	return "STATE %s\nSKILL U:%s P:%s S:%s B:%s\nENERGY %d/%d\nVEL %.0f %.0f\nSPAWN %.0f %.0f" % [
+		get_debug_state_name(),
+		debug_flag(can_uppercut),
+		debug_flag(can_punch),
+		debug_flag(can_slam),
+		debug_flag(can_block and block_cooldown_timer <= 0.0),
+		fist_energy,
+		max_fist_energy,
+		velocity.x,
+		velocity.y,
+		spawn_position.x,
+		spawn_position.y,
+	]
+
+
+func get_debug_state_name() -> String:
+	if is_chained:
+		return "CHAIN"
+	if is_control_locked:
+		return "LOCK"
+	if is_blocking:
+		return "BLOCK"
+	if is_punch_dashing:
+		return "PUNCH"
+	if is_slamming:
+		return "SLAM"
+	if skill_silence_timer > 0.0:
+		return "SILENCE"
+	if slow_timer > 0.0:
+		return "SLOW"
+
+	return "NORMAL"
+
+
+func debug_flag(value: bool) -> String:
+	if value:
+		return "Y"
+
+	return "N"
+
+
+# =========================
+# 临时美术表现
+# =========================
+
+func update_skill_visuals(delta: float) -> void:
+	visual_anim_time += delta
+
+	if body_polygon != null:
+		body_polygon.color = get_body_visual_color()
+		update_placeholder_pose(delta)
+
+	if block_visual != null:
+		block_visual.visible = is_blocking
+
+	if punch_charge_visual != null:
+		update_punch_charge_visual(delta)
+
+
+func get_body_visual_color() -> Color:
+	if is_chained:
+		return visual_chain_color
+	if is_control_locked:
+		return visual_locked_color
+	if is_blocking:
+		return visual_block_color
+	if is_slamming:
+		return visual_slam_color
+	if is_punch_dashing:
+		if punch_is_full_charged:
+			return visual_full_charge_color
+		return visual_punch_color
+	if skill_silence_timer > 0.0:
+		return visual_silence_color
+
+	return visual_base_color
+
+
+func update_punch_charge_visual(_delta: float) -> void:
+	if not punch_button_holding:
+		punch_charge_visual.visible = false
+		return
+
+	var charge_ratio: float = clampf(punch_hold_time / punch_full_charge_time, 0.0, 1.0)
+	punch_charge_visual.visible = true
+	punch_charge_visual.scale = Vector2.ONE * (0.85 + charge_ratio * 0.35)
+	punch_charge_visual.color = Color(1.0, 0.38 + charge_ratio * 0.45, 0.12, 0.22 + charge_ratio * 0.32)
+
+
+func update_placeholder_pose(delta: float) -> void:
+	var pose: Dictionary = get_placeholder_pose()
+	var target_position: Vector2 = pose["position"] as Vector2
+	var target_scale: Vector2 = pose["scale"] as Vector2
+	var target_rotation: float = float(pose["rotation"])
+	var pose_weight: float = visual_pose_lerp_speed * delta
+
+	if pose_weight > 1.0:
+		pose_weight = 1.0
+
+	body_polygon.position = body_polygon.position.lerp(target_position, pose_weight)
+	body_polygon.scale = body_polygon.scale.lerp(target_scale, pose_weight)
+	body_polygon.rotation = lerpf(body_polygon.rotation, target_rotation, pose_weight)
+
+
+func get_placeholder_pose() -> Dictionary:
+	var target_position := Vector2.ZERO
+	var target_scale := Vector2.ONE
+	var target_rotation := 0.0
+
+	if is_chained:
+		target_position = Vector2(0.0, 2.0)
+		target_scale = Vector2(0.92, 1.1)
+		target_rotation = chain_visual_tilt
+	elif is_control_locked:
+		target_position = Vector2(0.0, 3.0)
+		target_scale = Vector2(1.08, 0.92)
+		target_rotation = deg_to_rad(-4.0 * facing_direction)
+	elif is_blocking:
+		target_position = Vector2(-2.0 * facing_direction, 1.0)
+		target_scale = Vector2(0.9, 1.08)
+	elif is_slamming:
+		target_position = Vector2(0.0, 1.0)
+		target_scale = Vector2(0.9, 1.24)
+		target_rotation = deg_to_rad(12.0 * slam_direction)
+	elif is_punch_dashing:
+		target_scale = Vector2(1.38, 0.78)
+		target_rotation = deg_to_rad(-3.0 * punch_dash_direction)
+	elif punch_button_holding:
+		var charge_ratio: float = clampf(punch_hold_time / punch_full_charge_time, 0.0, 1.0)
+		target_scale = Vector2(1.0 - charge_ratio * 0.12, 1.0 + charge_ratio * 0.16)
+		target_position = Vector2(-2.0 * facing_direction * charge_ratio, 0.0)
+	elif not is_on_floor():
+		if velocity.y < 0.0:
+			target_position = Vector2(0.0, -1.0)
+			target_scale = Vector2(0.92, 1.08)
+			target_rotation = deg_to_rad(-visual_air_lean_degrees * facing_direction)
+		else:
+			target_position = Vector2(0.0, 2.0)
+			target_scale = Vector2(1.04, 0.96)
+			target_rotation = deg_to_rad(visual_air_lean_degrees * 0.5 * facing_direction)
+	elif absf(velocity.x) > 10.0:
+		var run_phase: float = sin(visual_anim_time * visual_run_bob_speed)
+		target_position = Vector2(0.0, absf(run_phase) * visual_run_bob_amount)
+		target_scale = Vector2(1.04, 0.96 + absf(run_phase) * 0.04)
+		target_rotation = deg_to_rad(visual_run_lean_degrees * facing_direction)
+	else:
+		var idle_phase: float = sin(visual_anim_time * visual_idle_bob_speed)
+		target_position = Vector2(0.0, idle_phase * visual_idle_bob_amount)
+		target_scale = Vector2(1.0 + idle_phase * 0.015, 1.0 - idle_phase * 0.015)
+
+	return {
+		"position": target_position,
+		"scale": target_scale,
+		"rotation": target_rotation,
+	}
+
+
+func spawn_punch_afterimage() -> void:
+	if body_polygon == null or get_parent() == null:
+		return
+
+	var afterimage := Polygon2D.new()
+	afterimage.global_position = body_polygon.global_position
+	afterimage.global_rotation = body_polygon.global_rotation
+	afterimage.global_scale = body_polygon.global_scale
+	afterimage.polygon = body_polygon.polygon
+	afterimage.color = Color(visual_punch_color.r, visual_punch_color.g, visual_punch_color.b, 0.42)
+	get_parent().add_child(afterimage)
+
+	var tween := afterimage.create_tween()
+	tween.tween_property(afterimage, "modulate:a", 0.0, afterimage_lifetime)
+	tween.parallel().tween_property(afterimage, "scale", Vector2(1.18, 1.02), afterimage_lifetime)
+	tween.tween_callback(afterimage.queue_free)
+
+
+func spawn_burst_effect(effect_position: Vector2, effect_color: Color, effect_size: Vector2, lifetime: float) -> void:
+	if get_parent() == null:
+		return
+
+	var burst := Polygon2D.new()
+	var half_size: Vector2 = effect_size * 0.5
+	burst.polygon = PackedVector2Array([
+		Vector2(-half_size.x, -half_size.y),
+		Vector2(half_size.x, -half_size.y),
+		Vector2(half_size.x, half_size.y),
+		Vector2(-half_size.x, half_size.y)
+	])
+	burst.global_position = effect_position
+	burst.color = effect_color
+	get_parent().add_child(burst)
+
+	var tween := burst.create_tween()
+	tween.tween_property(burst, "modulate:a", 0.0, lifetime)
+	tween.parallel().tween_property(burst, "scale", Vector2(1.45, 1.45), lifetime)
+	tween.tween_callback(burst.queue_free)
 
 
 

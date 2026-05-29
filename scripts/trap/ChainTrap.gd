@@ -18,6 +18,10 @@ enum ChainState {
 @export var retract_time: float = 0.10
 @export var max_chain_length: float = 96.0
 @export var chain_hitbox_thickness: float = 18.0
+@export var chain_wait_color: Color = Color(0.15, 0.55, 0.7, 0.0)
+@export var chain_warning_color: Color = Color(1.0, 0.2, 0.12, 0.7)
+@export var chain_fire_color: Color = Color(0.75, 0.95, 1.0, 1.0)
+@export var chain_hold_color: Color = Color(0.35, 0.75, 1.0, 1.0)
 
 @onready var grab_point: Marker2D = $GrabPoint
 @onready var chain_line: Line2D = $ChainLine
@@ -113,7 +117,7 @@ func start_warning() -> void:
 	chain_state = ChainState.WARNING
 	state_duration = max(warning_time, 0.0)
 	state_timer = state_duration
-	hide_chain_line()
+	show_warning_line()
 	set_chain_hitbox_active(false)
 
 	if state_timer <= 0.0:
@@ -125,6 +129,7 @@ func start_extending() -> void:
 	state_duration = max(extend_time, 0.001)
 	state_timer = state_duration
 	chain_line.visible = true
+	chain_line.default_color = chain_fire_color
 	update_chain_progress(0.0)
 	set_chain_hitbox_active(true)
 
@@ -148,6 +153,7 @@ func start_holding(target: Node2D) -> void:
 	state_duration = max(hold_duration, 0.0)
 	state_timer = state_duration
 	chain_line.visible = true
+	chain_line.default_color = chain_hold_color
 	set_chain_hitbox_active(false)
 	update_chain_line_to_target()
 
@@ -162,6 +168,7 @@ func start_retracting() -> void:
 	state_timer = state_duration
 	clear_chained_target()
 	chain_line.visible = true
+	chain_line.default_color = chain_fire_color
 	set_chain_hitbox_active(false)
 	update_chain_progress(1.0)
 
@@ -236,9 +243,19 @@ func update_chain_line_to_target() -> void:
 
 func hide_chain_line() -> void:
 	chain_line.visible = false
+	chain_line.default_color = chain_wait_color
 	chain_line.points = PackedVector2Array([
 		Vector2.ZERO,
 		Vector2.ZERO
+	])
+
+
+func show_warning_line() -> void:
+	chain_line.visible = true
+	chain_line.default_color = chain_warning_color
+	chain_line.points = PackedVector2Array([
+		Vector2.ZERO,
+		grab_point.position
 	])
 
 

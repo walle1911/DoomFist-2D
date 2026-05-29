@@ -1,3 +1,24 @@
-[gd_scene format=3 uid="uid://bhnq2orl6ikq5"]
+[gd_scene load_steps=2 format=3 uid="uid://bhnq2orl6ikq5"]
 
-[node name="Hud" type="Node2D" unique_id=1899370913]
+[ext_resource type="Script" path="res://scripts/ui/DebugHUD.gd" id="1_qd3h7"]
+
+[node name="HUD" type="CanvasLayer" unique_id=1899370913]
+layer = 20
+script = ExtResource("1_qd3h7")
+
+[node name="Panel" type="PanelContainer" parent="."]
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 168.0
+offset_bottom = 100.0
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 5
+
+[node name="StatusLabel" type="Label" parent="Panel/MarginContainer"]
+layout_mode = 2
+text = "DEBUG"
