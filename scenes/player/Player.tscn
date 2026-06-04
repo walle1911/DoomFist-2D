@@ -1,8 +1,7 @@
-[gd_scene load_steps=6 format=3 uid="uid://sb870pah3x7m"]
+[gd_scene load_steps=5 format=3 uid="uid://sb870pah3x7m"]
 
 [ext_resource type="Script" uid="uid://h3uqre6i5ueq" path="res://scripts/player/PlayerController.gd" id="1_wr5hl"]
 [ext_resource type="PackedScene" uid="uid://bhnq2orl6ikq5" path="res://scenes/ui/HUD.tscn" id="2_gx83b"]
-[ext_resource type="SpriteFrames" path="res://assets/sprites/player/doomfist_anim_frames_v1.tres" id="2_xejcp"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_o8nba"]
 size = Vector2(20, 40)
@@ -18,11 +17,7 @@ uppercut_velocity = -600.0
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1634614184]
 shape = SubResource("RectangleShape2D_o8nba")
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1641191794]
-position = Vector2(0, -5)
-scale = Vector2(0.5, 0.5)
-sprite_frames = ExtResource("2_xejcp")
-animation = &"idle"
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1641191794]
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=707871304]
 
@@ -39,7 +34,6 @@ color = Color(0.25, 0.75, 1, 0.38)
 polygon = PackedVector2Array(-23, -23.5, 23, -23.5, 23, 23.5, -23, 23.5)
 
 [node name="Polygon2D" type="Polygon2D" parent="." unique_id=1785172194]
-visible = false
 color = Color(0.8332228, 0.724551, 0.39851984, 1)
 polygon = PackedVector2Array(-16, -28, 16, -28, 16, 20, -16, 20)
 uv = PackedVector2Array(130, -35.5, 296.5, 47.5, 329, -58.5)
