@@ -156,8 +156,6 @@ var chain_swing_direction: float = 1.0
 @export var visual_idle_bob_speed: float = 5.0
 @export var visual_run_bob_amount: float = 2.4
 @export var visual_run_bob_speed: float = 14.0
-@export var visual_run_lean_degrees: float = 5.0
-@export var visual_air_lean_degrees: float = 6.0
 
 var afterimage_timer: float = 0.0
 var visual_anim_time: float = 0.0
@@ -822,7 +820,6 @@ func get_placeholder_pose() -> Dictionary:
 	elif is_control_locked:
 		target_position = Vector2(0.0, 3.0)
 		target_scale = Vector2(1.08, 0.92)
-		target_rotation = deg_to_rad(-4.0 * facing_direction)
 	elif is_blocking:
 		target_position = Vector2(-2.0 * facing_direction, 1.0)
 		target_scale = Vector2(0.9, 1.08)
@@ -841,16 +838,13 @@ func get_placeholder_pose() -> Dictionary:
 		if velocity.y < 0.0:
 			target_position = Vector2(0.0, -1.0)
 			target_scale = Vector2(0.92, 1.08)
-			target_rotation = deg_to_rad(-visual_air_lean_degrees * facing_direction)
 		else:
 			target_position = Vector2(0.0, 2.0)
 			target_scale = Vector2(1.04, 0.96)
-			target_rotation = deg_to_rad(visual_air_lean_degrees * 0.5 * facing_direction)
 	elif absf(velocity.x) > 10.0:
 		var run_phase: float = sin(visual_anim_time * visual_run_bob_speed)
 		target_position = Vector2(0.0, absf(run_phase) * visual_run_bob_amount)
 		target_scale = Vector2(1.04, 0.96 + absf(run_phase) * 0.04)
-		target_rotation = deg_to_rad(visual_run_lean_degrees * facing_direction)
 	else:
 		var idle_phase: float = sin(visual_anim_time * visual_idle_bob_speed)
 		target_position = Vector2(0.0, idle_phase * visual_idle_bob_amount)
